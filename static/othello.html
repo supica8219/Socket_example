@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Online Othello</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<link href="/static/style.css" rel="stylesheet">
+</head>
+
+<body>
+  <div id="modal" >
+    <p id="annai">--名前を入力してルームに入ろう--</p>
+    <br>
+      <input type="text" id="user_name"placeholder="名前">
+    <select name="role" id="role_select">
+      <option value="view">観戦</option>
+    </select>
+    <br>
+    <select name="room" id="room_select">
+      <option value="room1">room1</option>
+      <option value="room2">room2</option>
+      <option value="room3">room3</option>
+      <option value="BOT_ROOM">BOT_ROOM</option>
+    </select>
+    <div id="select_roominfo"></div>
+    <label><input type="checkbox" id="bot_flag"/>BOT</label>
+    <button onclick="join_room()">SEND</button>
+    <br>
+  </div>  
+  <div id="main_wrapper">
+    <div id="msg-box"></div>
+    <div id="header"><h1>オセロゲーム</h1></div>
+    <div id="table">
+      <div id="blackBackground"style="position:absolute;left:0;top:0;background-color:black;"></div>
+      <div id="discLayer"></div>
+      <div id="canMoveLayer"></div>
+      <div id="scoreLavel">Black: 2 White: 2</div>
+    </div>
+    
+    <div id="info_box">
+      <p id="socketid">id</p>
+      <p id="admininfo">___</p>
+      <p id="user_info">info</p>
+      <p id="room">room_name</p>
+      <p id="turn">turn</p>
+      <input type="text" id="chat_text"placeholder="チャット">
+      <button onclick="send_chat()">チャット送信</button>  
+      <div id="chat_area"></div>
+    </div>
+  </div>
+  <script src="/static/ui.js"></script>
+  <script src="/static/game.js"></script>
+</body>
+</html>
