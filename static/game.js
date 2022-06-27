@@ -2,21 +2,23 @@
 
 //DIFINATION
 var socket = io();
+var socketID = "";
 var blackBackground;
-var gap = 3;
-if(screen.width<screen.height)
-var cellWidth = screen.width/8-gap;
-else
-var cellWidth = 60;
+var gap = screen.width/100/4;
+var cellWidth = screen.width/100*6-gap;
 var discLayer;
 var canMoveLayer;
 var scoreLavel;
+var pictures = []
 var gameover =false;
 var turn;
 var discs;
 var table = document.getElementById("table")
-
-
+socket.emit("req_id")
+socket.on("ret_id",(socketid)=>{
+  socketID = socketid
+  console.log(socketID)
+})
 document.getElementById("room_select").addEventListener("change",()=>{
   var room_name=document.getElementById("room_select").value
   socket.emit('send_roominfo',room_name)
@@ -35,16 +37,26 @@ socket.emit('send_roominfo',"room1")
 //JOIN_ROOM_FORM
 function join_room(){
   document.getElementById("chat_area").innerHTML=""
-  document.getElementById("modal").style.display="none"
+  document.getElementById("modal-window").style.display="none"
+  document.getElementById("overlay").style.display="none"
   var user_name = document.getElementById("user_name").value;
   var role = document.getElementById("role_select").value;
   var room_name = document.getElementById("room_select").value;
   var bot_flag = document.getElementById("bot_flag").checked;
-  console.log(bot_flag)
-  if(user_name == null || role == null)return;
-  socket.emit('join_room',room_name,user_name,bot_flag);
+  var img_path = socketID + ".JPG"  
+  
+  if(user_name == null || role == null){console.log("NO");return;}
+  socket.emit('join_room',room_name,user_name,bot_flag,img_path);
   socket.emit('admin',role)
+  socket.emit('getimage')
 }
+socket.on("sendImage",(data)=>{
+    //const imgElement = document.getElementById('imageViewer');
+    //imgElement.src = data.imgSrc;
+    pictures.push(data.imgSrc)
+    console.log(pictures)
+    //table.style.backgroundImage = "url("+data.imgSrc+")"
+})
 //SEND CHAT
 function send_chat() {
   var text=document.getElementById("chat_text").value
@@ -62,9 +74,9 @@ socket.on("ret_chat",(user_name,text,role)=>{
 })
 socket.on("ret_admin",(role,user_name)=>{
   document.getElementById("user_info").innerHTML = "ロール"+role+"<br>"+"名前"+user_name;
-  if(role == "black"){table.style.backgroundColor = "black"}
+  /*if(role == "black"){table.style.backgroundColor = "black"}
   else if(role == "white"){table.style.backgroundColor = "white"}
-  else if(role == "view"){table.style.backgroundImage = "kinoko.png"}
+  else if(role == "view"){table.style.backgroundColor = "orange"}*/
 })
 socket.on("ret_connected",(socketid)=>{
   document.getElementById("socketid").innerHTML = socketid
@@ -142,7 +154,7 @@ function drawDiscs(affectedDiscs){
         if(value==1){bcount++;}else{wcount++;}
       }
     }
-  }
+  } 
   document.getElementById("scoreLavel").innerHTML="黒:"+bcount+" 白:"+wcount;
 }
 //PRINT RETURN TABLE
@@ -163,8 +175,9 @@ socket.on('ret_table',(table,room_name,turn,affectedDiscs) => {
 socket.on('state', (mozi) => {
   console.log(mozi)
 });
-
-socket.on('connect',gameStart);
+socket.on('connect',()=>{
+  gameStart();
+});
 
 socket.on('REMOVE',()=>{
   window.location.reload(true);

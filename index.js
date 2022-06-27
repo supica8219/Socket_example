@@ -4,10 +4,12 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const sleep = require('./sleep')
+const fs = require('fs')
 const socketIO = require('socket.io');
 const app = express();
 const server = http.Server(app);
 const io = socketIO(server);
+const sharp = require('sharp')
 const value_table = [
   [45,-11,4,-1,-1,4,-11,45],
   [-11,-16,-1,-3,-3,2,-16,-11],
@@ -23,7 +25,7 @@ const room = class {
     this.blackID = "";
     this.whiteID = "";
     this.turn = 1;
-    this.users = {},
+    this.users = [],
     this.bot = false,
     this.table = [
       [0,0,0,0,0,0,0,0],
@@ -43,6 +45,7 @@ const user = class {
     this.room = "";
     this.name = "";
     this.role = "";
+    this.img_path = "";
   }
 }
 //ROOM LIST
@@ -61,24 +64,53 @@ io.on('connection', function(socket) {
   users[socket.id] = new user(socket.id)
   io.to(socket.id).emit('ret_connected',socket.id)
   //JOIN ROOM
-  socket.on("join_room", function(room_name,user_name,bot_flag){  
+  socket.on("join_room", function(room_name,user_name,bot_flag,img_path){  
     for(let key of socket.rooms){
+      console.log(socket.rooms)
       if(socket.id != key){
         socket.leave(key)
       }
     } 
     socket.join(room_name)
     users[socket.id].room = room_name;
-    users[socket.id].name = user_name;
-    console.log(socket.id+"::"+users[socket.id].room)
+    users[socket.id].name = user_name;   
+    users[socket.id].img_path =img_path;
+    console.log(socket.id+"::"+users[socket.id].room+"::"+users[socket.id].img_path)
     if( rooms[room_name] == undefined ){
       rooms[room_name] = new room(room_name);
       if(bot_flag==true){
         rooms[room_name].bot = true;
       }
     }
+    rooms[room_name].users.push(socket.id);
+    console.log(rooms[room_name].users)
     io.to(room_name).emit('ret_table',retCanMoveTable(rooms[room_name].turn,room_name),room_name,rooms[room_name].turn,[]);
   })
+  socket.on('req_id',()=>{
+    io.to(socket.id).emit('ret_id',socket.id)
+  })
+  socket.on('getimage', reason => {
+    var room_name = users[socket.id].room;
+    console.log("---------")
+    if(rooms[room_name].whiteID != ""){
+        let imageFilePath = path.join(__dirname, 'static/image/' + rooms[room_name].whiteID + '.JPG');
+        console.log(imageFilePath)
+        fs.readFile(imageFilePath, 'base64', (err, data) => {
+        if (err) {console.log(err);return;}
+        var imgSrc = 'data:image/jpg;base64,' + data;
+       io.to(room_name).emit('sendImage', { imgSrc });
+    });
+    }
+    if(rooms[room_name].blackID != ""){
+      let imageFilePath = path.join(__dirname, 'static/image/' + rooms[room_name].blackID + '.JPG');
+      console.log(imageFilePath)
+      fs.readFile(imageFilePath, 'base64', (err, data) => {
+          if (err) {console.log(err);return;}
+          var imgSrc = 'data:image/jpg;base64,' + data;
+         io.to(room_name).emit('sendImage', { imgSrc });
+      }); 
+    }
+  });
   socket.on('admin',(role)=>{
     var room_name = users[socket.id].room;
     var user_name = users[socket.id].name;
@@ -105,7 +137,6 @@ io.on('connection', function(socket) {
     io.to(room_name).emit('admininfo',users[rooms[room_name].blackID].name,users[rooms[room_name].whiteID].name);
     io.to(room_name).emit('ret_chat',user_name+"が入室しました","",role); 
   })  
-  
   socket.on('send_chat',(text)=>{
     var room_name = users[socket.id].room;
     var user_name = users[socket.id].name;
@@ -129,6 +160,7 @@ io.on('connection', function(socket) {
     var user_name = users[socket.id].name;
     var turn = rooms[room_name].turn;
     var role = users[socket.id].role;
+    if(!rooms.hasOwnProperty(room_name)){console.log("NOROOM");return;}
     //ROLE REFUSE
     if(role=="black"||role=="white"){}else{return;}
     if(role=="black"&&turn==2){return;}
@@ -276,6 +308,7 @@ function botAction2(room_name){
         value=value_table[i][j]
       }
     }
+    
     if(row==-999){return;}
     console.log(row,column,value)
     console.log("BOTACTION2",row,column)
@@ -290,7 +323,7 @@ function botAction2(room_name){
       if(wc>bc)io.to(room_name).emit('ret_chat',"","ゲーム終了:白の勝利","SYSTEM");
       if(wc==bc)io.to(room_name).emit('ret_chat',"","ゲーム終了:引き分け","SYSTEM");
       //TIMER
-      var time = 10;
+      var time = 30;
       setInterval(function(){
         //if(time%3==0)
         io.to(room_name).emit('ret_chat',"","あと"+time+"秒でルームを閉じます","SYSTEM");
@@ -331,7 +364,7 @@ function botAction(room_name){
       if(wc>bc)io.to(room_name).emit('ret_chat',"","ゲーム終了:白の勝利","SYSTEM");
       if(wc==bc)io.to(room_name).emit('ret_chat',"","ゲーム終了:引き分け","SYSTEM");
       //TIMER
-      var time = 10;
+      var time = 30;
       setInterval(function(){
         //if(time%3==0)
         io.to(room_name).emit('ret_chat',"","あと"+time+"秒でルームを閉じます","SYSTEM");
@@ -355,11 +388,35 @@ function botAction(room_name){
   }
   })
 }
+//MULTER SETTING
+const multer = require('multer')
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'static/image/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  }
+})
+const upload = multer({ storage: storage})
 app.use('/static', express.static(__dirname + '/static'));
 //RETURN HTML FILE
 app.get('/', (request, response) => {
   response.sendFile(path.join(__dirname, '/static/othello.html'))
 });
+app.post('/', upload.single('file'), function (req,res,next){
+  console.log("bb",req.file.originalname)
+  const path = req.file.path;
+  const dest = "static/image/" + req.body.socketID + ".jpg";
+  fs.renameSync(path, dest);
+  console.log(dest)
+  sharp(dest)
+    .rotate(0)
+    .resize(400,400,'inside')
+    .toFile("static/image/" + req.body.socketID + ".JPG");
+  console.log("UPLOADED IMAGE")
+})
+
 //LISTEN SERVER PORT 3000
 server.listen(3000, function() {
   console.log('Starting server on port 3000');

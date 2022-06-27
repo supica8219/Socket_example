@@ -11,8 +11,15 @@
 </head>
 
 <body>
-  <div id="modal" >
-    <p id="annai">--名前を入力してルームに入ろう--</p>
+  <!-- オーバーレイ -->
+  <div id="overlay" class="overlay"></div>
+  <div id="modal-window" >
+    <h1 id="annai">名前を入力して<br>ルームに入ろう</h1>
+    <h3>画像アップロード</h3>
+    <form action="/" method="POST" id="form"enctype="multipart/form-data">
+        <input type="file" name="file" id="img_file">
+        <button type="button" id="submit-button">送信</button>
+    </form>
     <br>
       <input type="text" id="user_name"placeholder="名前">
     <select name="role" id="role_select">
@@ -27,31 +34,31 @@
     </select>
     <div id="select_roominfo"></div>
     <label><input type="checkbox" id="bot_flag"/>BOT</label>
-    <button onclick="join_room()">SEND</button>
+    <button onclick="join_room()" type="button">SEND</button>
     <br>
   </div>  
   <div id="main_wrapper">
     <div id="msg-box"></div>
-    <div id="header"><h1>オセロゲーム</h1></div>
     <div id="table">
-      <div id="blackBackground"style="position:absolute;left:0;top:0;background-color:black;"></div>
-      <div id="discLayer"></div>
-      <div id="canMoveLayer"></div>
+      <div id="blackBackground"></div>
+     <div id="discLayer"></div>
+     <div id="canMoveLayer"></div>
       <div id="scoreLavel">Black: 2 White: 2</div>
     </div>
     
     <div id="info_box">
-      <p id="socketid">id</p>
-      <p id="admininfo">___</p>
-      <p id="user_info">info</p>
-      <p id="room">room_name</p>
-      <p id="turn">turn</p>
+      <!-- <img id="imageViewer" width="640" height="360"> -->
+      <p id="socketid" style="display:none;">id</p>
+      <p id="admininfo"style="display:none;">___</p>
+      <p id="user_info"style="display:none;">info</p>
+      <p id="room"style="display:none;">room_name</p>
+      <p id="turn"style="display:none;">turn</p>
       <input type="text" id="chat_text"placeholder="チャット">
       <button onclick="send_chat()">チャット送信</button>  
-      <div id="chat_area"></div>
+      <div id="chat_area"style="display:none;"></div>
     </div>
   </div>
+    <script src="/static/game.js"></script>
   <script src="/static/ui.js"></script>
-  <script src="/static/game.js"></script>
 </body>
 </html>

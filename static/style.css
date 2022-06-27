@@ -13,13 +13,6 @@
 }
 #main_wrapper{
 }
-#modal{
-  position:absolute;  
-  left:0;top:0;
-  width:100%;height:100%;
-  background-color:blue;
-  z-index:3;
-}
 #msg-box{
   position:fixed;
   top:5%;left:50%;
@@ -34,17 +27,31 @@
   display:none;
 }
 #info_box{
-  background-color:#ffd500;
-  
+  position:absolute;
+  bottom:0;left:0;
+  width:100%;
+  background-color:rgba(0,0,0,0.8);
 }
 #header{
   background-color:#ffe666;
 }
+#blackBackground{
+  position:absolute;
+  top:2%;left:25%;
+  background-color:black;"
+}
+#discLayer{
+  position:absolute;
+  top:2%;left:25%;
+}
 #table{
   position:relative;
   width:100%;
-  height:700px;
+  height:100vh;
   background-color:#e77d04;
+  background-size:contain;
+  background-repeat:repeat;
+  animation: bg 10s infinite linear;
 }
 .disc_effect {
   animation: d_effect .86s ease;
@@ -56,4 +63,47 @@
 100%{
     transform: rotateY(540deg);
    }
+}
+/* モーダルウィンドウ */
+#modal-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background-color: #dfdddd;
+  border-radius: 5px;
+  z-index: 11;
+  padding: 2rem;
+}
+/* 閉じるボタン */
+#button-close {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  padding: 1em;
+  background-color: #c96931;
+  color: #eaeaea;
+  border-radius: 20rem;
+  cursor: pointer;
+}
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+@keyframes bg {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 680px -680px;
+  }
 }
